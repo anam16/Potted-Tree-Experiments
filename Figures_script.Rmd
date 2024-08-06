@@ -1,0 +1,648 @@
+---
+title: "Figure Script"
+author: "Ana María Muñoz Morales"
+date: "2024-08-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. The necessary libraries and scripts are loaded.
+
+```{r}
+library(chillR)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(cowplot)
+library(ggpubr)
+source("DM_JOSE.R")
+```
+
+2.It is loaded and the necessary changes are made to the dataset to work with the data afterwards.
+
+* Data for the season 2022/2023
+```{r}
+hourtemps_final <- read_delim("DeseoMacetas.csv",
+                        delim = ";", escape_double = FALSE, col_types = cols(FECHA = col_date(format = "%d/%m/%Y"),
+                                                                             HORA = col_character()), locale = locale(decimal_mark = ","),
+                        trim_ws = TRUE)
+```
+
+
+* Data for the season 2023/2024
+
+```{r}
+hourtemps_2<-read.csv("Final_result.csv")
+hourtemps_2<-hourtemps_2 %>% rename(FECHA = Fecha, HORA = Hora)
+hourtemps_2$FECHA<-as.Date(hourtemps_2$FECHA)
+
+
+hourtemps_2 <- hourtemps_2 %>% slice(1:22976)
+#which(is.na(hourtemps_2$TMED))
+```
+
+
+3. A function to calculate the Portions is created with the "Dynamic Model" function and the previously loaded "DM_JOSE" function.
+
+```{r}
+Calculated_Portions <- function(df,ambiente,date1,date2) {
+  TA <- subset(df,Environment == ambiente)
+  CR_temps <- TA %>% filter(between(FECHA, as.Date(date1, "%d/%m/%y"), as.Date(date2, "%d/%m/%y")))
+  #View(CR_temps)
+  #PORTIONS_DM90
+  Portions90 <- Dynamic_Model(CR_temps$TMED)
+  #PORTIONS_DM87
+  Portions87<-DM_JOSE(CR_temps$TMED)
+  
+  
+  print(paste0("The portions for the 90's Dynamic Model for the dates ", date1, "-", date2, " are ", tail(Portions90)[1]))
+  print(paste0("The portions for the Dynamic Model of '87 for dates ", date1, "-", date2, " are ", tail(Portions87)[1]))
+  
+  #return(list(Portions90=Portions90))
+}
+```
+
+4. A function is created to calculate the GDH.
+
+```{r}
+Calculated_GDH <- function(df,ambiente,date1,date2) {
+
+  TA <- subset(df, Environment == ambiente)
+  HA_temps <- TA %>% filter(between(FECHA, as.Date(date1, "%d/%m/%y"), as.Date(date2, "%d/%m/%y")))
+  #View(HA_temps)
+  HR<-GDH(HA_temps$TMED)
+  print(paste("The accumulated heat is: ",round(HR[length(HR)]), "GHD"))
+}
+
+```
+
+
+## Figure 2 
+
+### Season 2022/2023
+
+
+```{r}
+date1 <- as.Date("16/11/22", "%d/%m/%y")
+date2 <- as.Date("15/03/23", "%d/%m/%y")
+```
+
+
+1. Coldstore
+
+```{r}
+newdata_1 <- subset(hourtemps_final, Treatment == "TA")
+CR_temps_1 <-
+  newdata_1 %>% filter(between(FECHA, date1, date2))
+CR_temps_1$Treatment<-"TColdstore"
+Portions1 <- DM_JOSE(CR_temps_1$TMED)
+```
+
+
+2. Cieza
+To correct Cieza's NA values
+
+```{r}
+
+newdata_2<- subset(hourtemps_final, Treatment == "Tcieza")
+
+CR_temps_2 <-
+  newdata_2 %>% filter(between(FECHA, date1, date2))
+CR_temps_2$Treatment<-"TCieza"
+Portions2 <- DM_JOSE(CR_temps_2$TMED)
+```
+
+
+3. Santomera
+
+```{r}
+newdata_3 <- subset(hourtemps_final, Treatment == "Tsantomera")
+CR_temps_3 <-
+  newdata_3 %>% filter(between(FECHA, date1, date2))
+CR_temps_3$Treatment<-"TSantomera"
+Portions3 <- DM_JOSE(CR_temps_3$TMED)
+```
+
+4. T1
+
+```{r}
+newdata_4 <- subset(hourtemps_final, Treatment == "T1")
+CR_temps_4 <-
+  newdata_4 %>% filter(between(FECHA, date1, date2))
+Portions4 <- DM_JOSE(CR_temps_4$TMED)
+```
+
+5. T2
+
+```{r}
+newdata_5 <- subset(hourtemps_final, Treatment == "T2")
+CR_temps_5 <-
+  newdata_5 %>% filter(between(FECHA, date1, date2))
+Portions5 <- DM_JOSE(CR_temps_5$TMED)
+```
+
+6. T3
+
+```{r}
+newdata_6 <- subset(hourtemps_final, Treatment == "T3")
+CR_temps_6 <-
+  newdata_6 %>% filter(between(FECHA, date1, date2))
+Portions6 <- DM_JOSE(CR_temps_6$TMED)
+```
+
+7. T4
+
+```{r}
+newdata_7 <- subset(hourtemps_final, Treatment == "T4")
+CR_temps_7 <-
+  newdata_7 %>% filter(between(FECHA, date1, date2))
+Portions7 <- DM_JOSE(CR_temps_7$TMED)
+```
+
+
+8. T5
+
+```{r}
+newdata_8 <- subset(hourtemps_final, Treatment == "T5")
+CR_temps_8 <-
+  newdata_8 %>% filter(between(FECHA, date1, date2))
+Portions8 <- DM_JOSE(CR_temps_8$TMED)
+```
+
+
+
+```{r}
+tail(Portions1)
+tail(Portions2)
+tail(Portions3)
+tail(Portions4)
+tail(Portions5)
+tail(Portions6)
+tail(Portions7)
+tail(Portions8)
+```
+
+9. Dataset Final
+
+```{r}
+Result_Portions<-c(Portions1, Portions2, Portions3,Portions4,Portions5,Portions6,Portions7,Portions8)
+```
+
+```{r}
+Dataset_final<-rbind(CR_temps_1,CR_temps_2,CR_temps_3,CR_temps_4,CR_temps_5,CR_temps_6,CR_temps_7,CR_temps_8)
+Dataset_final$Portions<-Result_Portions
+```
+
+
+```{r}
+Sys.setlocale("LC_TIME", "English")
+# We define the order of treatments
+orden_tratamientos <- c("TCieza", "TSantomera", "TColdstore", "T1", "T2", "T3", "T4", "T5")
+
+Figura_2223 <- ggplot(Dataset_final, aes(x = FECHA, y = Portions, color = Treatment)) +
+  geom_line(size = 1.2, show.legend = FALSE) +
+  labs(x = "Date", y = "Chill accumulation (in CP)") +
+  scale_color_manual(
+    values = c(
+      "TColdstore" = "#8B8378", 
+      "TSantomera" = "#0000CD", 
+      "TCieza" = "#CD3333",
+      "T1" = "#458B00",
+      "T2" = "chocolate3",
+      "T3" = "darkorchid3",
+      "T4" = "#B8860B",
+      "T5" = "black"
+    ),
+    breaks = orden_tratamientos
+  ) +   
+  scale_y_continuous(breaks = seq(0, 70, 10), limits = c(0, 70)) + 
+  theme_bw(base_size = 13) +  
+  theme(
+    axis.title.y = element_text(size = 18),
+    axis.title.x = element_text(size = 18),
+    legend.title.align = 0.5,
+    legend.position = "none",
+    legend.text = element_text(size = 20)
+  )
+Figura_2223
+
+```
+
+
+### Season 2023/2024
+
+
+```{r}
+date1 <- as.Date("16/11/23", "%d/%m/%y")
+date2 <- as.Date("15/03/24", "%d/%m/%y")
+```
+
+
+1. Coldstore
+
+```{r}
+newdata_1 <- subset(hourtemps_2, Treatment == "TColdstore")
+CR_temps_1 <-
+  newdata_1 %>% filter(between(FECHA, date1, date2))
+Portions1 <- DM_JOSE(CR_temps_1$TMED)
+```
+
+
+2.To correct Cieza's NA values
+
+
+```{r}
+newdata_2<- subset(hourtemps_2, Treatment == "TCieza")
+CR_temps_2 <-
+  newdata_2 %>% filter(between(FECHA, date1, date2))
+```
+
+
+To interpolate the empty data of the TMED column
+
+```{r}
+CR_temps_2_to_correct<-CR_temps_2
+#which(is.na(hourtemps_2_to_correct$HORA))
+
+#hourtemps_2_to_correct$HORA<-as.Date(hourtemps_2_to_correct$HORA)
+m <- month(ymd(CR_temps_2_to_correct$FECHA))
+d <- day(ymd(CR_temps_2_to_correct$FECHA))
+
+y <- year(ymd(CR_temps_2_to_correct$FECHA))
+  
+CR_temps_2_to_correct$Year <- y
+CR_temps_2_to_correct$Month <- m
+CR_temps_2_to_correct$Day <- d
+
+
+
+CR_temps_2_to_correct$Cultivo=NULL
+CR_temps_2_to_correct$Treatment=NULL
+CR_temps_2_to_correct$Environment=NULL
+CR_temps_2_to_correct$FECHA=NULL
+which(is.na(CR_temps_2_to_correct$HORA))
+CR_temps_2_to_correct<-CR_temps_2_to_correct %>% rename(Temp= TMED, Hour = HORA)
+CR_temps_2_to_correct$Hour<-substr(CR_temps_2_to_correct$Hour, 1,2)
+#which(is.na(hourtemps_2_to_correct$HORA))
+CR_temps_2_to_correct$Hour<-as.numeric(CR_temps_2_to_correct$Hour)
+#which(is.na(hourtemps_2_to_correct))
+CR_temps_2_to_correct <- interpolate_gaps_hourly(hourtemps = CR_temps_2_to_correct,
+                                      latitude = 38.27)
+CR_temps_2_to_correct<-CR_temps_2_to_correct$weather
+which(is.na(CR_temps_2_to_correct$Hour))
+```
+
+
+```{r}
+CR_temps_2$TMED=NULL
+CR_temps_2$TMED<-CR_temps_2_to_correct$Temp
+#CR_temps_2
+Portions2 <- DM_JOSE(CR_temps_2$TMED)
+```
+
+3. Santomera
+
+```{r}
+newdata_3 <- subset(hourtemps_2, Treatment == "TSantomera")
+CR_temps_3 <-
+  newdata_3 %>% filter(between(FECHA, date1, date2))
+Portions3 <- DM_JOSE(CR_temps_3$TMED)
+```
+
+4. T1
+
+```{r}
+newdata_4 <- subset(hourtemps_2, Treatment == "T1")
+CR_temps_4 <-
+  newdata_4 %>% filter(between(FECHA, date1, date2))
+Portions4 <- DM_JOSE(CR_temps_4$TMED)
+```
+
+5. T2
+
+```{r}
+newdata_5 <- subset(hourtemps_2, Treatment == "T2")
+CR_temps_5 <-
+  newdata_5 %>% filter(between(FECHA, date1, date2))
+Portions5 <- DM_JOSE(CR_temps_5$TMED)
+```
+
+6. T3
+
+```{r}
+newdata_6 <- subset(hourtemps_2, Treatment == "T3")
+CR_temps_6 <-
+  newdata_6 %>% filter(between(FECHA, date1, date2))
+Portions6 <- DM_JOSE(CR_temps_6$TMED)
+```
+
+7. T4
+
+```{r}
+newdata_7 <- subset(hourtemps_2, Treatment == "T4")
+CR_temps_7 <-
+  newdata_7 %>% filter(between(FECHA, date1, date2))
+Portions7 <- DM_JOSE(CR_temps_7$TMED)
+```
+
+
+8. T5
+
+```{r}
+newdata_8 <- subset(hourtemps_2, Treatment == "T5")
+CR_temps_8 <-
+  newdata_8 %>% filter(between(FECHA, date1, date2))
+Portions8 <- DM_JOSE(CR_temps_8$TMED)
+```
+
+
+
+```{r}
+tail(Portions1)
+tail(Portions2)
+tail(Portions3)
+tail(Portions4)
+tail(Portions5)
+tail(Portions6)
+tail(Portions7)
+tail(Portions8)
+```
+
+Final Dataset
+
+```{r}
+Result_Portions<-c(Portions1, Portions2, Portions3,Portions4,Portions5,Portions6,Portions7,Portions8)
+```
+
+```{r}
+Dataset_final<-rbind(CR_temps_1,CR_temps_2,CR_temps_3,CR_temps_4,CR_temps_5,CR_temps_6,CR_temps_7,CR_temps_8)
+Dataset_final$Portions<-Result_Portions
+```
+
+```{r}
+
+Sys.setlocale("LC_TIME", "English")
+
+Figura_2324 <- ggplot(Dataset_final, aes(x = FECHA, y = Portions, color = Treatment)) +
+  geom_line(size = 1.2) +
+  labs(x = "Date", y = "") +
+  scale_color_manual(
+    values = c(
+      "TColdstore" = "#8B8378", 
+      "TSantomera" = "#0000CD", 
+      "TCieza" = "#CD3333",
+      "T1" = "#458B00",
+      "T2" = "chocolate3",
+      "T3" = "darkorchid3",
+      "T4" = "#B8860B",
+      "T5" = "black"
+    ),
+    breaks = orden_tratamientos
+  ) +   
+  scale_y_continuous(breaks = seq(0, 70, 10), limits = c(0, 70)) +  
+  theme_bw(base_size = 13) +  
+  theme(
+    axis.title.y = element_text(size = 18),
+    axis.title.x = element_text(size = 18),  
+    legend.title.align = 0.5,  
+    legend.background = element_rect(linetype = 1, size = 0.3, colour = 1),
+    legend.position = "none",
+    legend.text = element_text(size = 20)
+  )
+
+ 
+Figura_2324
+```
+
+Combination of graphs
+
+```{r}
+
+Figura_seasons <- ggarrange(
+  Figura_2223, Figura_2324,
+  labels = c("A", "B"), 
+  ncol = 2, 
+  nrow = 1,
+  common.legend = TRUE, 
+  legend = "bottom"
+)
+
+Figura_seasons
+ggsave("Chill-seasons.png", Figura_seasons, width = 35, height = 19, units = "cm", dpi = 300)
+```
+
+## Figure 3
+
+### Season 2022/2023
+
+1 Data for the 2022/2023 season is uploaded
+```{r}
+Santomera_2223<-read.csv("values_Santomera_2223.csv",sep=";")
+Santomera_2223$Date<-as.Date(Santomera_2223$Date)
+```
+
+
+2. Data from 1 November - 15 March are selected
+
+```{r}
+date1<-"2022-11-01"
+date2<-"2023-03-15"
+Santomera_2223_filt <- Santomera_2223  %>%
+  filter((Date >= as.Date(date1) & Date <= as.Date(date2)))
+```
+
+3. Average temperatures
+
+```{r}
+Santomera_2223_filt_2 <- Santomera_2223_filt %>%
+  group_by(Date) %>%
+  summarize(TMED = round(mean(Temperature),2))
+Santomera_2223_filt_2$Season<-"Season 2022/2023"
+```
+
+### Season 2023/2024
+
+1 Data for the 2023/2024 season is uploaded
+
+```{r}
+Santomera_2324<-read.csv("values_Santomera_2324.csv",sep=";")
+Santomera_2324$Date<-as.Date(Santomera_2324$Date)
+```
+
+2. Data from 1 November - 15 March are selected
+
+```{r}
+date1<-"2023-11-01"
+date2<-"2024-03-15"
+Santomera_2324_filt <- Santomera_2324  %>%
+  filter((Date >= as.Date(date1) & Date <= as.Date(date2)))
+```
+
+3. Average temperatures
+
+```{r}
+Santomera_2324_filt_2 <- Santomera_2324_filt %>%
+  group_by(Date) %>%
+  summarize(TMED = round(mean(Temperature),2))
+Santomera_2324_filt_2$Season<-"Season 2023/2024"
+```
+
+
+```{r}
+df_Santomera_merge<-rbind(Santomera_2223_filt_2,Santomera_2324_filt_2)
+```
+
+
+```{r}
+df_Santomera_merge_final <- df_Santomera_merge %>%
+  mutate(dia_del_ano = yday(Date))
+df_Santomera_merge_final  <- df_Santomera_merge %>%
+  mutate(dia_del_ano_ajustado = ifelse(month(Date) >= 11, yday(Date) - yday(as.Date(paste(year(Date), "-01-01", sep=""))) + 1, yday(Date) + 365))
+```
+
+
+
+```{r}
+Figura_Santomera_Temperature<-ggplot(df_Santomera_merge_final, aes(x = dia_del_ano_ajustado, y = TMED, color = Season)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c("Season 2022/2023"="cadetblue","Season 2023/2024"="red3")) + 
+  labs(x = "Date", y = "Temperature") +
+  scale_y_continuous(breaks = seq(0, 30, 5),limits = c(0, 30))  +
+  scale_x_continuous(
+    name = "Date",
+    breaks = c(305,335,366,397,425),
+    labels = c("Nov", "Dec", "Jan", "Feb", "Mar"),
+  ) +
+  theme_bw(base_size = 15) +  
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 20),
+        legend.title.align = 0.5,
+        legend.text = element_text(size = 20),
+        legend.background = element_rect(color = "black", fill = NA))
+Figura_Santomera_Temperature
+ggsave("Figura_Santomera_Temperature.png", Figura_Santomera_Temperature,width = 15,height = 10)
+```
+
+## Figure 4
+
+
+```{r}
+# Create a data frame with the necessary date columns.
+data <- data.frame(
+  Tratamiento = c("T1 Season22/23","T2 Season22/23","T3 Season22/23","T4 Season22/23","T5 Season22/23","TColdstore Season22/23", "TSantomera Season22/23","TCieza Season22/23","T1 Season23/24","T2 Season23/24","T3 Season23/24","T4 Season23/24","T5 Season23/24","TColdstore Season23/24","TSantomera Season23/24","TCieza Season23/24"),
+  Inicio_experiments = as.Date(c("2022-11-16", "2022-11-16","2022-11-16","2022-11-16","2022-11-16","2022-11-16","2022-11-16","2022-11-16","2023-11-16","2023-11-16","2023-11-16","2023-11-16","2023-11-16","2023-11-16","2023-11-16","2023-11-16")),
+  mov_invernadero = as.Date(c("2023-02-28","2023-03-08","2023-02-21","2023-02-24","2023-02-17","2023-02-12", NA,NA,"2024-03-07","2024-03-11","2024-02-26","2024-03-04","2024-03-08","2024-02-13",NA,NA)),
+  Floracion = as.Date(c("2023-03-11","2023-03-17","2023-03-05","2023-03-03","2023-03-08","2023-03-02","2023-03-26","2023-03-24","2024-03-17","2024-03-20","2024-03-13","2024-03-07","2024-03-15","2024-03-01",NA,"2024-03-17"))
+)
+```
+
+
+```{r}
+data <- data %>%
+  mutate(
+    dias_inicio_invernadero = ifelse(!is.na(mov_invernadero), as.numeric(difftime(mov_invernadero, Inicio_experiments, units = "days")), NA),
+    dias_invernadero_flor = ifelse(!is.na(mov_invernadero), as.numeric(difftime(Floracion, mov_invernadero, units = "days")), NA),
+    dias_inicio_flor = ifelse(is.na(mov_invernadero), as.numeric(difftime(Floracion,Inicio_experiments, units = "days")), NA)
+  )
+```
+
+
+```{r}
+Chill<-data$dias_inicio_invernadero
+Heat<-data$dias_invernadero_flor
+Chill_Heat<-data$dias_inicio_flor
+Treatment<-data$Tratamiento
+
+data_graph <- data.frame(
+  value = c(Chill, Heat, Chill_Heat),
+  Treatment = Treatment,
+  category = factor(rep(c("Chill", "Heat", "Chill Heat"), each = 16), levels = c("Chill Heat", "Heat", "Chill"))
+)
+```
+
+
+```{r}
+flor<-ggplot(data_graph,aes(x = value, y = Treatment, fill = category)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept="",col = "black", linetype = "dashed") +
+  geom_text(aes(x=65,y = "TSantomera Season23/24", label = "*"), size = 18, color = "black") +
+  scale_y_discrete(limits=c("TSantomera Season22/23","T2 Season23/24","T1 Season23/24","TCieza Season23/24","T5 Season23/24","T3 Season23/24","T4 Season23/24","TColdstore Season23/24","TSantomera Season23/24","","TSantomera Season22/23","TCieza Season22/23","T2 Season22/23","T1 Season22/23","T5 Season22/23","T3 Season22/23","T4 Season22/23","TColdstore Season22/23"))  +
+  scale_fill_manual(values = c("#BF3EFF", "#93C0DF", "darkred"),
+                    breaks=c("Chill Heat","Chill","Heat"),
+                       labels=c("Simultaneous chill and heat\naccumulation in field conditions\n","Chill accumulation\n","Accumulation of GDH in a \nheated glasshouse\n\nFull bloom")) +
+  theme_minimal() +
+  labs(x = "Date", y = "Treatment", fill = "") +
+  scale_x_continuous(
+    name = "Date",
+    breaks = c(0,14,45,76,107),
+    labels = c("Nov", "Dec", "Jan", "Feb", "March"),
+  ) +
+  theme(legend.position = "right", legend.direction = "vertical",
+        legend.text = element_text (size = 20))
+flor<-flor + theme(axis.text = element_text(size = 20),
+             axis.title = element_text(size = 30))
+
+flor
+ggsave(plot = flor , filename = "Flor_Tratamiento.png", units = "cm", height = 29, width = 54, dpi = 900)
+```
+
+## Figure 5
+
+
+
+```{r}
+graph3_5<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(6610,3581,3272,3463,1907,5698,5567,3596,3238,5786,1139,1484),GDH_while_accumulating_chill= c(5698,13212,18521,11882,17368,12337,6657,18425,19295,13662,16406,15902))
+
+```
+
+
+```{r}
+get_R2 <- function(modelo) {
+  summary(modelo)$r.squared
+}
+
+modelo_GDH <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5)
+R2_GDH <- get_R2(modelo_GDH)
+```
+
+
+```{r}
+graph3_5_temp1 <- graph3_5 %>% slice(1:6)
+modelo_GDH_temp1 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_temp1)
+R2_GDH_temp1<- get_R2(modelo_GDH_temp1)
+```
+
+
+```{r}
+graph3_5_temp2 <- graph3_5 %>% slice(7:12)
+modelo_GDH_temp2 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_temp2)
+R2_GDH_temp2<- get_R2(modelo_GDH_temp2)
+```
+
+
+```{r}
+graph_3_5<-ggplot(graph3_5, aes(x = GDH_In_the_glasshouse, y = GDH_while_accumulating_chill,color = factor(Temporada))) +
+  geom_point() +
+  geom_smooth(method = "lm",color = "darkred",size=1) +
+  scale_color_manual(values = c("#DA70D6", "palegreen4"), 
+                     breaks = c(1, 2), 
+                     labels = c("Season 2022/2023", "Season 2023/2024")) +
+  labs(color = "Season") +
+  scale_x_continuous(breaks = seq(1000, 7000,1000),limits = c(1000, 7000)) +
+  scale_y_continuous(breaks = seq(1000, 25000,3000),limits = c(1000, 25000)) +
+  labs(x = "GDH (In the glasshouse)", y = "GDH (while accumulating chill)")+
+  theme_bw(base_size = 15) +  
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 20),
+        legend.title.align = 0.5,
+        legend.text = element_text(size = 20),
+        legend.background = element_rect(color = "black", fill = NA))
+graph_3_5
+ggsave("graph_3_5.png", graph_3_5,width = 15,height = 10)
+
+```

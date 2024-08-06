@@ -1,0 +1,487 @@
+---
+title: "Linear Models"
+author: "Ana María Muñoz Morales"
+date: "2024-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Libraries are loaded
+
+```{r}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+```
+
+2. Dataset is loaded.
+
+```{r}
+dataset<-read_xlsx("Correción_invernadero_Estación_Radiación.xlsx")
+```
+
+3.The "Hora" and "Pyranometer SP-Lite and CMP3 (W/m²)" columns are modified.
+
+```{r}
+dataset$Hora<-as.character(dataset$Hora)
+
+for (i in 1:nrow(dataset)) {
+  dataset$Hora[i]<-substr(dataset$Hora[i], 12,13)
+}
+
+dataset$Hora <- ifelse(dataset$Hora == "", "00", dataset$Hora)
+
+dataset$Hora<-as.factor(dataset$Hora)
+
+```
+
+
+```{r}
+dataset<-rename(dataset, Radiacion = `Pyranometer SP-Lite and CMP3 (W/m²)`)
+dataset$Radiacion <- gsub(",", ".", dataset$Radiacion)
+dataset$Radiacion<-as.numeric(dataset$Radiacion)
+```
+
+5. A function is created to obtain the metrics that interest us from each model.
+
+```{r}
+get_metrics_lm <- function(modelo) {
+  
+  R2 <- summary(modelo)$r.squared
+  
+  
+  R2_adjusted <- summary(modelo)$adj.r.squared
+  
+  
+  AIC_value <- AIC(modelo)
+  
+  # Devolver los valores como un vector
+  return(c(R2 , R2_adjusted , AIC_value))
+}
+
+```
+
+
+## Division of data by Temperature Sections
+
+
+```{r}
+dataset_1<-dataset
+dataset_1$Diferencia=NULL
+```
+
+
+```{r}
+Section1_temp <- subset(dataset_1, Fuera >= 0 & Fuera < 7.5)
+Section2_temp <- subset(dataset_1, Fuera >= 7.5 & Fuera < 15)
+Section3_temp<- subset(dataset_1, Fuera >= 15 & Fuera < 22.5)
+Section4_temp <- subset(dataset_1, Fuera >= 22.5 & Fuera <= 30)
+```
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature
+
+#### Section 1 (0-7.5)
+
+```{r}
+modelo_Section1_temp<-lm(Invernadero ~ Fuera ,data=Section1_temp)
+metrics_modelo_Section1_temp<-get_metrics_lm(modelo_Section1_temp)
+```
+
+#### Section 2 (7.5-15)
+
+```{r}
+modelo_Section2_temp<-lm(Invernadero ~ Fuera ,data=Section2_temp)
+metrics_modelo_Section2_temp<-get_metrics_lm(modelo_Section2_temp)
+
+```
+
+#### Section 3 (15-22.5)
+
+```{r}
+modelo_Section3_temp<-lm(Invernadero ~ Fuera ,data=Section3_temp)
+metrics_modelo_Section3_temp<-get_metrics_lm(modelo_Section3_temp)
+```
+
+#### Section 4 (22.5-30)
+
+```{r}
+modelo_Section4_temp<-lm(Invernadero ~ Fuera ,data=Section4_temp)
+metrics_modelo_Section4_temp<-get_metrics_lm(modelo_Section4_temp)
+```
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + hours
+
+#### Section 1 (0-7.5)
+
+```{r}
+modelo_Section1_temp_hours<-lm(Invernadero ~ Fuera + Hora,data=Section1_temp)
+metrics_modelo_Section1_temp_hours<-get_metrics_lm(modelo_Section1_temp_hours)
+```
+
+#### Section 2 (7.5-15)
+
+```{r}
+modelo_Section2_temp_hours<-lm(Invernadero ~ Fuera + Hora ,data=Section2_temp)
+metrics_modelo_Section2_temp_hours<-get_metrics_lm(modelo_Section2_temp_hours)
+```
+
+#### Section 3 (15-22.5)
+
+```{r}
+modelo_Section3_temp_hours<-lm(Invernadero ~ Fuera + Hora ,data=Section3_temp)
+metrics_modelo_Section3_temp_hours<-get_metrics_lm(modelo_Section3_temp_hours)
+```
+
+#### Section 4 (22.5-30)
+
+```{r}
+modelo_Section4_temp_hours<-lm(Invernadero ~ Fuera + Hora ,data=Section4_temp)
+metrics_modelo_Section4_temp_hours<-get_metrics_lm(modelo_Section4_temp_hours)
+```
+
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + Radiation
+
+#### Section 1 (0-7.5)
+
+```{r}
+modelo_Section1_temp_radi<-lm(Invernadero ~ Fuera + Radiacion,data=Section1_temp)
+metrics_modelo_Section1_temp_radi<-get_metrics_lm(modelo_Section1_temp_radi)
+```
+
+#### Section 2 (7.5-15)
+
+```{r}
+modelo_Section2_temp_radi<-lm(Invernadero ~ Fuera + Radiacion ,data=Section2_temp)
+metrics_modelo_Section2_temp_radi<-get_metrics_lm(modelo_Section2_temp_radi)
+```
+
+#### Section 3 (15-22.5)
+
+```{r}
+modelo_Section3_temp_radi<-lm(Invernadero ~ Fuera + Radiacion ,data=Section3_temp)
+metrics_modelo_Section3_temp_radi<-get_metrics_lm(modelo_Section3_temp_radi)
+```
+
+#### Section 4 (22.5-30)
+
+```{r}
+modelo_Section4_temp_radi<-lm(Invernadero ~ Fuera + Radiacion ,data=Section4_temp)
+metrics_modelo_Section4_temp_radi<-get_metrics_lm(modelo_Section4_temp_radi)
+```
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + Radiation + hours
+
+#### Section 1 (0-7.5)
+
+```{r}
+modelo_Section1_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora,data=Section1_temp)
+metrics_modelo_Section1_temp_radi_hours<-get_metrics_lm(modelo_Section1_temp_radi_hours)
+```
+
+#### Section 2 (7.5-15)
+
+```{r}
+modelo_Section2_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora ,data=Section2_temp)
+metrics_modelo_Section2_temp_radi_hours<-get_metrics_lm(modelo_Section2_temp_radi_hours)
+```
+
+#### Section 3 (15-22.5)
+
+```{r}
+modelo_Section3_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora ,data=Section3_temp)
+metrics_modelo_Section3_temp_radi_hours<-get_metrics_lm(modelo_Section3_temp_radi_hours)
+```
+
+#### Section 4 (22.5-30)
+
+```{r}
+modelo_Section4_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora  ,data=Section4_temp)
+metrics_modelo_Section4_temp_radi_hours<-get_metrics_lm(modelo_Section4_temp_radi_hours)
+```
+
+
+## Division of data by Month Sections
+
+```{r}
+dataset_2<-dataset
+dataset_2$Diferencia=NULL
+```
+
+```{r}
+for (i in 1:nrow(dataset_2)) {
+  name_num <- substr(dataset_2$`Fecha-Hora`[i], 6, 7)
+  name_month <- switch(name_num,
+                       "01" = "january",
+                       "02" = "february",
+                       "03" = "march",
+                       "12" = "december",
+                       "Not Found")
+  dataset_2$Month[i] <- name_month
+}
+```
+
+```{r}
+Section1_month <- subset(dataset_2, Month=="december")
+Section2_month <- subset(dataset_2, Month=="january")
+Section3_month <- subset(dataset_2, Month=="february")
+Section4_month <- subset(dataset_2, Month=="march")
+```
+
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature
+
+#### Section 1 (December)
+
+```{r}
+modelo_Section1_month_temp<-lm(Invernadero ~ Fuera ,data=Section1_month)
+metrics_modelo_Section1_month_temp<-get_metrics_lm(modelo_Section1_month_temp)
+```
+
+#### Section 2 (January)
+
+```{r}
+modelo_Section2_month_temp<-lm(Invernadero ~ Fuera ,data=Section2_month)
+metrics_modelo_Section2_month_temp<-get_metrics_lm(modelo_Section2_month_temp)
+```
+
+#### Section 3 (February)
+
+```{r}
+modelo_Section3_month_temp<-lm(Invernadero ~ Fuera ,data=Section3_month)
+metrics_modelo_Section3_month_temp<-get_metrics_lm(modelo_Section3_month_temp)
+```
+
+#### Section 4 (March)
+
+```{r}
+modelo_Section4_month_temp<-lm(Invernadero ~ Fuera ,data=Section4_month)
+metrics_modelo_Section4_month_temp<-get_metrics_lm(modelo_Section4_month_temp)
+```
+
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + hours
+
+#### Section 1 (December)
+
+```{r}
+modelo_Section1_month_temp_hours<-lm(Invernadero ~ Fuera + Hora,data=Section1_month)
+metrics_modelo_Section1_month_temp_hours<-get_metrics_lm(modelo_Section1_month_temp_hours)
+```
+
+#### Section 2 (January)
+
+```{r}
+modelo_Section2_month_temp_hours<-lm(Invernadero ~ Fuera + Hora,data=Section2_month)
+metrics_modelo_Section2_month_temp_hours<-get_metrics_lm(modelo_Section2_month_temp_hours)
+```
+
+#### Section 3 (February)
+
+```{r}
+modelo_Section3_month_temp_hours<-lm(Invernadero ~ Fuera + Hora,data=Section3_month)
+metrics_modelo_Section3_month_temp_hours<-get_metrics_lm(modelo_Section3_month_temp_hours)
+```
+
+#### Section 4 (March)
+
+```{r}
+modelo_Section4_month_temp_hours<-lm(Invernadero ~ Fuera + Hora,data=Section4_month)
+metrics_modelo_Section4_month_temp_hours<-get_metrics_lm(modelo_Section4_month_temp_hours)
+```
+
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + Radiation
+
+#### Section 1 (December)
+
+```{r}
+modelo_Section1_month_temp_radi<-lm(Invernadero ~ Fuera + Radiacion,data=Section1_month)
+metrics_modelo_Section1_month_temp_radi<-get_metrics_lm(modelo_Section1_month_temp_radi)
+```
+
+#### Section 2 (January)
+
+```{r}
+modelo_Section2_month_temp_radi<-lm(Invernadero ~ Fuera + Radiacion,data=Section2_month)
+metrics_modelo_Section2_month_temp_radi<-get_metrics_lm(modelo_Section2_month_temp_radi)
+```
+
+#### Section 3 (February)
+
+```{r}
+modelo_Section3_month_temp_radi<-lm(Invernadero ~ Fuera + Radiacion,data=Section3_month)
+metrics_modelo_Section3_month_temp_radi<-get_metrics_lm(modelo_Section3_month_temp_radi)
+```
+
+#### Section 4 (March)
+
+```{r}
+modelo_Section4_month_temp_radi<-lm(Invernadero ~ Fuera + Radiacion,data=Section4_month)
+metrics_modelo_Section4_month_temp_radi<-get_metrics_lm(modelo_Section4_month_temp_radi)
+```
+
+### Linear Model, Outdoor Temperature vs Greenhouse Temperature + Radiation +hours
+
+#### Section 1 (December)
+
+```{r}
+modelo_Section1_month_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora,data=Section1_month)
+metrics_modelo_Section1_month_temp_radi_hours<-get_metrics_lm(modelo_Section1_month_temp_radi_hours)
+
+```
+
+
+#### Section 2 (January)
+
+```{r}
+modelo_Section2_month_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora,data=Section2_month)
+metrics_modelo_Section2_month_temp_radi_hours<-get_metrics_lm(modelo_Section2_month_temp_radi_hours)
+```
+
+
+#### Section 3 (February)
+
+```{r}
+modelo_Section3_month_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora,data=Section3_month)
+metrics_modelo_Section3_month_temp_radi_hours<-get_metrics_lm(modelo_Section3_month_temp_radi_hours)
+
+```
+
+
+#### Section 4 (March)
+
+```{r}
+modelo_Section4_month_temp_radi_hours<-lm(Invernadero ~ Fuera + Radiacion + Hora,data=Section4_month)
+metrics_modelo_Section4_month_temp_radi_hours<-get_metrics_lm(modelo_Section4_month_temp_radi_hours)
+
+```
+
+
+
+### Comparative table
+
+```{r,echo=FALSE}
+table <-data.frame(Model= c("Temp_rang1","Temp_rang2","Temp_rang3","Temp_rang4","Temp_hours_rang1","Temp_hours_rang2","Temp_hours_rang3","Temp_hours_rang4","Temp_radi_rang1","Temp_radi_rang2","Temp_radi_rang3","Temp_radi_rang4","Temp_radi_hours_rang1","Temp_radi_hours_rang2","Temp_radi_hours_rang3","Temp_radi_hours_rang4","Temp_december","Temp_january","Temp_february","Temp_march","Temp_hours_december","Temp_hours_january","Temp_hours_february","Temp_hours_march","Temp_radi_december","Temp_radi_january","Temp_radi_february","Temp_radi_march","Temp_radi_hours_december","Temp_radi_hours_january","Temp_radi_hours_february","Temp_radi_hours_march"),R2=c(metrics_modelo_Section1_temp[1],metrics_modelo_Section2_temp[1],metrics_modelo_Section3_temp[1],metrics_modelo_Section4_temp[1],metrics_modelo_Section1_temp_hours[1],metrics_modelo_Section2_temp_hours[1],metrics_modelo_Section3_temp_hours[1],metrics_modelo_Section4_temp_hours[1],metrics_modelo_Section1_temp_radi[1],metrics_modelo_Section2_temp_radi[1],metrics_modelo_Section3_temp_radi[1],metrics_modelo_Section4_temp_radi[1],metrics_modelo_Section1_temp_radi_hours[1],metrics_modelo_Section2_temp_radi_hours[1],metrics_modelo_Section3_temp_radi_hours[1],metrics_modelo_Section4_temp_radi_hours[1],metrics_modelo_Section1_month_temp[1],metrics_modelo_Section2_month_temp[1],metrics_modelo_Section3_month_temp[1],metrics_modelo_Section4_month_temp[1],metrics_modelo_Section1_month_temp_hours[1],metrics_modelo_Section2_month_temp_hours[1],metrics_modelo_Section3_month_temp_hours[1],metrics_modelo_Section4_month_temp_hours[1],metrics_modelo_Section1_month_temp_radi[1],metrics_modelo_Section2_month_temp_radi[1],metrics_modelo_Section3_month_temp_radi[1],metrics_modelo_Section4_month_temp_radi[1],metrics_modelo_Section1_month_temp_radi_hours[1],metrics_modelo_Section2_month_temp_radi_hours[1],metrics_modelo_Section3_month_temp_radi_hours[1],metrics_modelo_Section4_month_temp_radi_hours[1]),
+                  R2_adjusted=c(metrics_modelo_Section1_temp[2],metrics_modelo_Section2_temp[2],metrics_modelo_Section3_temp[2],metrics_modelo_Section4_temp[2],metrics_modelo_Section1_temp_hours[2],metrics_modelo_Section2_temp_hours[2],metrics_modelo_Section3_temp_hours[2],metrics_modelo_Section4_temp_hours[2],metrics_modelo_Section1_temp_radi[2],metrics_modelo_Section2_temp_radi[2],metrics_modelo_Section3_temp_radi[2],metrics_modelo_Section4_temp_radi[2],metrics_modelo_Section1_temp_radi_hours[2],metrics_modelo_Section2_temp_radi_hours[2],metrics_modelo_Section3_temp_radi_hours[2],metrics_modelo_Section4_temp_radi_hours[2],metrics_modelo_Section1_month_temp[2],metrics_modelo_Section2_month_temp[2],metrics_modelo_Section3_month_temp[2],metrics_modelo_Section4_month_temp[2],metrics_modelo_Section1_month_temp_hours[2],metrics_modelo_Section2_month_temp_hours[2],metrics_modelo_Section3_month_temp_hours[2],metrics_modelo_Section4_month_temp_hours[2],metrics_modelo_Section1_month_temp_radi[2],metrics_modelo_Section2_month_temp_radi[2],metrics_modelo_Section3_month_temp_radi[2],metrics_modelo_Section4_month_temp_radi[2],metrics_modelo_Section1_month_temp_radi_hours[2],metrics_modelo_Section2_month_temp_radi_hours[2],metrics_modelo_Section3_month_temp_radi_hours[2],metrics_modelo_Section4_month_temp_radi_hours[2]),AIC=c(metrics_modelo_Section1_temp[3],metrics_modelo_Section2_temp[3],metrics_modelo_Section3_temp[3],metrics_modelo_Section4_temp[3],metrics_modelo_Section1_temp_hours[3],metrics_modelo_Section2_temp_hours[3],metrics_modelo_Section3_temp_hours[3],metrics_modelo_Section4_temp_hours[3],metrics_modelo_Section1_temp_radi[3],metrics_modelo_Section2_temp_radi[3],metrics_modelo_Section3_temp_radi[3],metrics_modelo_Section4_temp_radi[3],metrics_modelo_Section1_temp_radi_hours[3],metrics_modelo_Section2_temp_radi_hours[3],metrics_modelo_Section3_temp_radi_hours[3],metrics_modelo_Section4_temp_radi_hours[3],metrics_modelo_Section1_month_temp[3],metrics_modelo_Section2_month_temp[3],metrics_modelo_Section3_month_temp[3],metrics_modelo_Section4_month_temp[3],metrics_modelo_Section1_month_temp_hours[3],metrics_modelo_Section2_month_temp_hours[3],metrics_modelo_Section3_month_temp_hours[3],metrics_modelo_Section4_month_temp_hours[3],metrics_modelo_Section1_month_temp_radi[3],metrics_modelo_Section2_month_temp_radi[3],metrics_modelo_Section3_month_temp_radi[3],metrics_modelo_Section4_month_temp_radi[3],metrics_modelo_Section1_month_temp_radi_hours[3],metrics_modelo_Section2_month_temp_radi_hours[3],metrics_modelo_Section3_month_temp_radi_hours[3],metrics_modelo_Section4_month_temp_radi_hours[3]))
+```
+
+
+```{r}
+table
+```
+
+
+## Data corrections
+
+
+1. The datastet to be corrected is loaded.
+
+```{r}
+dataset_to_correct<-read_xlsx("Brutos Fuera Invernadero Santomera 2023-2024.xlsx")
+```
+
+
+2. The data in the dataset are adapted.
+
+```{r}
+dataset_to_correct$Time<-as.character(dataset_to_correct$Time)
+
+for (i in 1:nrow(dataset_to_correct)) {
+  dataset_to_correct$Time[i]<-substr(dataset_to_correct$Time[i], 12,13)
+}
+
+dataset_to_correct$Time <- ifelse(dataset_to_correct$Time == "", "00", dataset_to_correct$Time)
+
+dataset_to_correct$Time<-as.factor(dataset_to_correct$Time)
+dataset_to_correct$`Relative Humidity (% RH)`=NULL
+dataset_to_correct$`Lluvia desde26Feb2021 (mm)`=NULL
+dataset_to_correct<-dataset_to_correct %>% rename (Hora = Time, `Fecha-Hora` = Date)
+```
+
+
+3. We filter data and modify the dataset for further use.
+
+```{r}
+dataset_to_correct$`Fecha-Hora` <- as.Date(dataset_to_correct$`Fecha-Hora`)
+dataset_to_correct_2 <- dataset_to_correct %>%
+  filter(`Fecha-Hora` >= as.Date("2023-12-01") & `Fecha-Hora` <= as.Date("2024-03-21"))
+dataset_to_correct_2 <- dataset_to_correct_2 %>%
+  slice(-(10722
+:10753))
+
+```
+
+
+```{r}
+
+dataset_to_correct_2 <- dataset_to_correct_2 %>%
+  group_by(`Fecha-Hora`, Hora) %>%
+  summarize(Radiacion
+            = mean(`Pyranometer SP-Lite and CMP3 (W/m²)`),
+            Fuera = mean(`Air temperature (°C)`))
+
+
+```
+
+
+
+```{r}
+for (i in 1:nrow(dataset_to_correct_2)) {
+  name_num <- substr(dataset_to_correct_2$`Fecha-Hora`[i], 6, 7)
+  name_month <- switch(name_num,
+                       "01" = "january",
+                       "02" = "february",
+                       "03" = "march",
+                       "12" = "december",
+                       "Not Found")
+  dataset_to_correct_2$Month[i] <- name_month
+}
+```
+
+4. We section the data by month
+
+```{r}
+Data1_month <- subset(dataset_to_correct_2, Month=="december")
+Data2_month <- subset(dataset_to_correct_2, Month=="january")
+Data3_month <- subset(dataset_to_correct_2, Month=="february")
+Data4_month <- subset(dataset_to_correct_2, Month=="march")
+```
+
+5. The values predicted by the model are obtained using the *predict()* function.
+
+
+```{r}
+predicciones_1 <- predict(modelo_Section1_month_temp_radi_hours, Data1_month)
+Data1_month$Invernadero <- predicciones_1
+```
+
+```{r}
+predicciones_2 <- predict(modelo_Section2_month_temp_radi_hours, Data2_month)
+Data2_month$Invernadero <- predicciones_2
+```
+
+```{r}
+predicciones_3 <- predict(modelo_Section3_month_temp_radi_hours, Data3_month)
+Data3_month$Invernadero <- predicciones_3
+```
+
+
+```{r}
+predicciones_4 <- predict(modelo_Section4_month_temp_radi_hours, Data4_month)
+Data4_month$Invernadero <- predicciones_4
+```
+
+6. The final corrected dataset is created.
+
+```{r}
+dataset_final<-rbind(Data1_month,Data2_month,Data3_month,Data4_month)
+```
+
+```{r}
+write.csv(dataset_final, "Brutos Fuera Invernadero Santomera2023-2024_Corregido.csv", row.names = FALSE)
+```

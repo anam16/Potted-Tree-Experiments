@@ -1,0 +1,714 @@
+---
+title: "GDh Portions (25-50-75-100) Article pots"
+author: "Ana María Muñoz Morales"
+date: "2024-06-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(chillR)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(cowplot)
+source("DM_JOSE.R")
+```
+
+```{r}
+hourtemps_final <- read_delim("DeseoMacetas.csv",
+                        delim = ";", escape_double = FALSE, col_types = cols(FECHA = col_date(format = "%d/%m/%Y"),
+                                                                             HORA = col_character()), locale = locale(decimal_mark = ","),
+                        trim_ws = TRUE)
+```
+
+
+For each treatment of the 2022/2023 and 2023/2024 season let's calculate the dates for which we have 25% of 60 CP (15 CP), 50% (30 CP) and 75% (45CP).
+
+
+1. A function is created to calculate the portions.
+
+```{r}
+Calculated_Portions <- function(df,treatment,date1,date2) {
+  df <- subset(df, Treatment == treatment)
+  df_filt <- df %>% filter(between(FECHA, as.Date(date1, "%d/%m/%y"), as.Date(date2, "%d/%m/%y")))
+  Portions87<-DM_JOSE(df_filt$TMED)
+  df_filt$Portions<-Portions87
+
+  df_por25<-df_filt %>% filter(Portions <= 16)
+  df_por50<-df_filt %>% filter(Portions <= 31)
+  df_por75<-df_filt %>% filter(Portions <= 46)
+  
+  cat(paste0("Dates for treatment ", treatment, " of the season are:To get 25%: ",df_por25$FECHA[1]," - ",tail(df_por25$FECHA,1),"\nTo obtain 50%: ",df_por50$FECHA[1]," - ",tail(df_por50$FECHA,1),"\nTo obtain 75%: ",df_por75$FECHA[1]," - ",tail(df_por75$FECHA,1),"\n"))
+  fecha_fin_25<-tail(df_por25$FECHA,1)
+  fecha_fin_50<-tail(df_por50$FECHA,1)
+  fecha_fin_75<-tail(df_por75$FECHA,1)
+  portion_25<-max(df_por25$Portions)
+  portion_50<-max(df_por50$Portions)
+  portion_75<-max(df_por75$Portions)
+  portion_100<-max(df_filt$Portions)
+  
+  return(list(fecha_fin_25=fecha_fin_25,fecha_fin_50=fecha_fin_50,fecha_fin_75=fecha_fin_75,portion_25=portion_25,portion_50=portion_50,portion_75=portion_75,portion_100=portion_100))
+}
+```
+
+2. A function is created to calulate GDH.
+
+```{r}
+Calculated_GDH <- function(df , date1,date2) {
+  
+  df_filt <- subset(df)
+  HA_temps <- df_filt %>% filter(between(FECHA, as.Date(date1, "%Y/%m/%d"), as.Date(date2, "%Y/%m/%d")))
+  #View(HA_temps)
+  HR<-GDH(HA_temps$TMED)
+  return(round(HR[length(HR)]))
+  
+}
+```
+
+3. A function is created to filter the dataset.
+
+```{r}
+# Define function for filtering and modifying the data frame
+filter_df <- function(df, treatment, name_col, fecha_inicio, fecha_fin) {
+  
+  df <- subset(df, Treatment == treatment)
+  # Convert the date column to Date if it is not already a Date column
+  df[[name_col]] <- as.Date(df[[name_col]])
+  
+  # Filter the data frame between specified dates
+  df_filtrado <- df[df[[name_col]] >= as.Date(fecha_inicio) & df[[name_col]] <= as.Date(fecha_fin), ]
+  
+  # Delete the first 11 rows from start date
+  inicio_indices <- which(df_filtrado[[name_col]] == as.Date(fecha_inicio))
+  if(length(inicio_indices) >= 11) {
+    df_filtrado <- df_filtrado[-inicio_indices[1:11], ]
+  }
+  
+  # Delete the last 13 rows up to end date
+  fin_indices <- which(df_filtrado[[name_col]] == as.Date(fecha_fin))
+  if(length(fin_indices) >= 13) {
+    df_filtrado <- df_filtrado[-tail(fin_indices, 13), ]
+  }
+  
+  # Return the modified data frame
+  return(df_filtrado)
+}
+```
+
+
+
+## Season 2022/2023
+
+
+```{r}
+fechas_TA_2223<-Calculated_Portions(hourtemps_final,"TA","16/11/22","12/02/23")
+fechas_T1_2223<-Calculated_Portions(hourtemps_final,"T1","16/11/22","28/02/23")
+fechas_T2_2223<-Calculated_Portions(hourtemps_final,"T2","16/11/22","08/03/23")
+fechas_T3_2223<-Calculated_Portions(hourtemps_final,"T3","16/11/22","21/02/23")
+fechas_T4_2223<-Calculated_Portions(hourtemps_final,"T4","16/11/22","24/02/23")
+fechas_T5_2223<-Calculated_Portions(hourtemps_final,"T5","16/11/22","17/02/23")
+```
+
+
+
+1. For TA treatment that is Coldstore
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-02-12"     
+
+df_TA_1 <- filter_df(hourtemps_final, "TA","FECHA", fecha_inicio, fecha_fin)
+
+View(df_TA_1)
+```
+
+
+
+```{r}
+fecha_fin_25_TA_2223<-fechas_TA_2223$fecha_fin_25
+fecha_fin_50_TA_2223<-fechas_TA_2223$fecha_fin_50
+fecha_fin_75_TA_2223<-fechas_TA_2223$fecha_fin_75
+fecha_fin_100_TA_2223<-"2023/02/12"
+CP_25_TA_2223<-fechas_TA_2223$portion_25
+CP_30_TA_2223<-fechas_TA_2223$portion_50
+CP_45_TA_2223<-fechas_TA_2223$portion_75
+CP_100_TA_2223<-fechas_TA_2223$portion_100
+GDH_TA_25<-Calculated_GDH(df_TA_1,fecha_fin_25_TA_2223,fecha_fin_100_TA_2223)
+GDH_TA_50<-Calculated_GDH(df_TA_1,fecha_fin_50_TA_2223,fecha_fin_100_TA_2223)
+GDH_TA_75<-Calculated_GDH(df_TA_1,fecha_fin_75_TA_2223,fecha_fin_100_TA_2223)
+GDH_TA_100<-Calculated_GDH(df_TA_1,"2022/11/16",fecha_fin_100_TA_2223)
+
+
+GDH_TA_25
+GDH_TA_50
+GDH_TA_75
+GDH_TA_100
+```
+
+1.1 In the glasshouse
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-03-02"     
+
+df_TA_1 <- filter_df(hourtemps_final, "TA","FECHA", fecha_inicio, fecha_fin)
+
+View(df_TA_1)
+
+Calculated_GDH(df_TA_1,fecha_fin_100_TA_2223,"2023/03/02")
+```
+
+
+2. For T1
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-02-28"     
+
+df_T1_1 <- filter_df(hourtemps_final, "T1","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T1_1)
+```
+
+
+```{r}
+fecha_fin_25_T1_2223<-fechas_T1_2223$fecha_fin_25
+fecha_fin_50_T1_2223<-fechas_T1_2223$fecha_fin_50
+fecha_fin_75_T1_2223<-fechas_T1_2223$fecha_fin_75
+fecha_fin_100_T1_2223<-"2023/02/28"
+CP_25_T1_2223<-fechas_T1_2223$portion_25
+CP_30_T1_2223<-fechas_T1_2223$portion_50
+CP_45_T1_2223<-fechas_T1_2223$portion_75
+CP_100_T1_2223<-fechas_T1_2223$portion_100
+GDH_T1_25<-Calculated_GDH(df_T1_1,fecha_fin_25_T1_2223,fecha_fin_100_T1_2223)
+GDH_T1_50<-Calculated_GDH(df_T1_1,fecha_fin_50_T1_2223,fecha_fin_100_T1_2223)
+GDH_T1_75<-Calculated_GDH(df_T1_1,fecha_fin_75_T1_2223,fecha_fin_100_T1_2223)
+GDH_T1_100<-Calculated_GDH(df_T1_1,"2022/11/16",fecha_fin_100_T1_2223)
+GDH_T1_25
+GDH_T1_50
+GDH_T1_75
+GDH_T1_100
+```
+
+3. For T2
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-03-08"     
+
+df_T2_1 <- filter_df(hourtemps_final, "T2","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T2_1)
+```
+
+```{r}
+fecha_fin_25_T2_2223<-fechas_T2_2223$fecha_fin_25
+fecha_fin_50_T2_2223<-fechas_T2_2223$fecha_fin_50
+fecha_fin_75_T2_2223<-fechas_T2_2223$fecha_fin_75
+fecha_fin_100_T2_2223<-"2023/03/08"
+CP_25_T2_2223<-fechas_T2_2223$portion_25
+CP_30_T2_2223<-fechas_T2_2223$portion_50
+CP_45_T2_2223<-fechas_T2_2223$portion_75
+CP_100_T2_2223<-fechas_T2_2223$portion_100
+GDH_T2_25<-Calculated_GDH(df_T2_1,fecha_fin_25_T2_2223,fecha_fin_100_T2_2223)
+GDH_T2_50<-Calculated_GDH(df_T2_1,fecha_fin_50_T2_2223,fecha_fin_100_T2_2223)
+GDH_T2_75<-Calculated_GDH(df_T2_1,fecha_fin_75_T2_2223,fecha_fin_100_T2_2223)
+GDH_T2_100<-Calculated_GDH(df_T2_1,"2022/11/16",fecha_fin_100_T2_2223)
+GDH_T2_25
+GDH_T2_50
+GDH_T2_75
+GDH_T2_100
+```
+
+
+3. For T3
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-02-21"     
+
+df_T3_1 <- filter_df(hourtemps_final, "T3","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T3_1)
+```
+
+```{r}
+fecha_fin_25_T3_2223<-fechas_T3_2223$fecha_fin_25
+fecha_fin_50_T3_2223<-fechas_T3_2223$fecha_fin_50
+fecha_fin_75_T3_2223<-fechas_T3_2223$fecha_fin_75
+fecha_fin_100_T3_2223<-"2023/02/21"
+CP_25_T3_2223<-fechas_T3_2223$portion_25
+CP_30_T3_2223<-fechas_T3_2223$portion_50
+CP_45_T3_2223<-fechas_T3_2223$portion_75
+CP_100_T3_2223<-fechas_T3_2223$portion_100
+GDH_T3_25<-Calculated_GDH(df_T3_1,fecha_fin_25_T3_2223,fecha_fin_100_T3_2223)
+GDH_T3_50<-Calculated_GDH(df_T3_1,fecha_fin_50_T3_2223,fecha_fin_100_T3_2223)
+GDH_T3_75<-Calculated_GDH(df_T3_1,fecha_fin_75_T3_2223,fecha_fin_100_T3_2223)
+GDH_T3_100<-Calculated_GDH(df_T3_1,"2022/11/16",fecha_fin_100_T3_2223)
+GDH_T3_25
+GDH_T3_50
+GDH_T3_75
+GDH_T3_100
+```
+
+4. For T4
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-02-24"     
+
+df_T4_1 <- filter_df(hourtemps_final, "T4","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T4_1)
+```
+
+```{r}
+fecha_fin_25_T4_2223<-fechas_T4_2223$fecha_fin_25
+fecha_fin_50_T4_2223<-fechas_T4_2223$fecha_fin_50
+fecha_fin_75_T4_2223<-fechas_T4_2223$fecha_fin_75
+fecha_fin_100_T4_2223<-"2023/02/24"
+CP_25_T4_2223<-fechas_T4_2223$portion_25
+CP_30_T4_2223<-fechas_T4_2223$portion_50
+CP_45_T4_2223<-fechas_T4_2223$portion_75
+CP_100_T4_2223<-fechas_T4_2223$portion_100
+GDH_T4_25<-Calculated_GDH(df_T4_1,fecha_fin_25_T4_2223,fecha_fin_100_T4_2223)
+GDH_T4_50<-Calculated_GDH(df_T4_1,fecha_fin_50_T4_2223,fecha_fin_100_T4_2223)
+GDH_T4_75<-Calculated_GDH(df_T4_1,fecha_fin_75_T4_2223,fecha_fin_100_T4_2223)
+GDH_T4_100<-Calculated_GDH(df_T4_1,"2022/11/16",fecha_fin_100_T4_2223)
+GDH_T4_25
+GDH_T4_50
+GDH_T4_75
+GDH_T4_100
+```
+
+5. For T5
+
+```{r}
+fecha_inicio <- "2022-11-16"  
+fecha_fin <- "2023-02-17"     
+
+df_T5_1 <- filter_df(hourtemps_final, "T5","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T5_1)
+```
+
+```{r}
+fecha_fin_25_T5_2223<-fechas_T5_2223$fecha_fin_25
+fecha_fin_50_T5_2223<-fechas_T5_2223$fecha_fin_50
+fecha_fin_75_T5_2223<-fechas_T5_2223$fecha_fin_75
+fecha_fin_100_T5_2223<-"2023/02/17"
+CP_25_T5_2223<-fechas_T5_2223$portion_25
+CP_30_T5_2223<-fechas_T5_2223$portion_50
+CP_45_T5_2223<-fechas_T5_2223$portion_75
+CP_100_T5_2223<-fechas_T5_2223$portion_100
+GDH_T5_25<-Calculated_GDH(df_T5_1,fecha_fin_25_T5_2223,fecha_fin_100_T5_2223)
+GDH_T5_50<-Calculated_GDH(df_T5_1,fecha_fin_50_T5_2223,fecha_fin_100_T5_2223)
+GDH_T5_75<-Calculated_GDH(df_T5_1,fecha_fin_75_T5_2223,fecha_fin_100_T5_2223)
+GDH_T5_100<-Calculated_GDH(df_T5_1,"2022/11/16",fecha_fin_100_T5_2223)
+GDH_T5_25
+GDH_T5_50
+GDH_T5_75
+GDH_T5_100
+```
+
+
+
+## Season 2023/2024
+
+```{r}
+hourtemps_2<-read.csv("Final_result.csv")
+hourtemps_2<-hourtemps_2 %>% rename(FECHA = Fecha, HORA = Hora)
+hourtemps_2$FECHA<-as.Date(hourtemps_2$FECHA)
+```
+
+
+```{r}
+fechas_TA_2324<-Calculated_Portions(hourtemps_2,"TColdstore","16/11/23","13/02/24")
+fechas_T1_2324<-Calculated_Portions(hourtemps_2,"T1","16/11/23","07/03/24")
+fechas_T2_2324<-Calculated_Portions(hourtemps_2,"T2","16/11/23","11/03/24")
+fechas_T3_2324<-Calculated_Portions(hourtemps_2,"T3","16/11/23","26/02/24")
+fechas_T4_2324<-Calculated_Portions(hourtemps_2,"T4","16/11/23","04/03/24")
+fechas_T5_2324<-Calculated_Portions(hourtemps_2,"T5","16/11/23","08/03/24")
+```
+
+1. For TA
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-02-13"     
+
+df_TA_2 <- filter_df(hourtemps_2, "TColdstore","FECHA", fecha_inicio, fecha_fin)
+
+View(df_TA_2)
+```
+
+```{r}
+fecha_fin_25_TA_2324<-fechas_TA_2324$fecha_fin_25
+fecha_fin_50_TA_2324<-fechas_TA_2324$fecha_fin_50
+fecha_fin_75_TA_2324<-fechas_TA_2324$fecha_fin_75
+fecha_fin_100_TA_2324<-"2024/02/13"
+CP_25_TA_2324<-fechas_TA_2324$portion_25
+CP_30_TA_2324<-fechas_TA_2324$portion_50
+CP_45_TA_2324<-fechas_TA_2324$portion_75
+CP_100_TA_2324<-fechas_TA_2324$portion_100
+GDH_TA_25_2324<-Calculated_GDH(df_TA_2,fecha_fin_25_TA_2324,fecha_fin_100_TA_2324)
+GDH_TA_50_2324<-Calculated_GDH(df_TA_2,fecha_fin_50_TA_2324,fecha_fin_100_TA_2324)
+GDH_TA_75_2324<-Calculated_GDH(df_TA_2,fecha_fin_75_TA_2324,fecha_fin_100_TA_2324)
+GDH_TA_100_2324<-Calculated_GDH(df_TA_2,"2023/11/16",fecha_fin_100_TA_2324)
+
+
+GDH_TA_25_2324
+GDH_TA_50_2324
+GDH_TA_75_2324
+GDH_TA_100_2324
+```
+
+1.1 In the glasshouse:
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-03-01"     
+
+df_TA_2_1 <- filter_df(hourtemps_2, "TColdstore","FECHA", fecha_inicio, fecha_fin)
+
+View(df_TA_2_1)
+Calculated_GDH(df_TA_2_1,fecha_fin_100_TA_2324,"2024/03/01")
+```
+
+
+2. For T1
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-03-07"     
+
+df_T1_2 <- filter_df(hourtemps_2, "T1","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T1_2)
+```
+
+```{r}
+fecha_fin_25_T1_2324<-fechas_T1_2324$fecha_fin_25
+fecha_fin_50_T1_2324<-fechas_T1_2324$fecha_fin_50
+fecha_fin_75_T1_2324<-fechas_T1_2324$fecha_fin_75
+fecha_fin_100_T1_2324<-"2024/03/07"
+CP_25_T1_2324<-fechas_T1_2324$portion_25
+CP_30_T1_2324<-fechas_T1_2324$portion_50
+CP_45_T1_2324<-fechas_T1_2324$portion_75
+CP_100_T1_2324<-fechas_T1_2324$portion_100
+GDH_T1_25_2324<-Calculated_GDH(df_T1_2,fecha_fin_25_T1_2324,fecha_fin_100_T1_2324)
+GDH_T1_50_2324<-Calculated_GDH(df_T1_2,fecha_fin_50_T1_2324,fecha_fin_100_T1_2324)
+GDH_T1_75_2324<-Calculated_GDH(df_T1_2,fecha_fin_75_T1_2324,fecha_fin_100_T1_2324)
+GDH_T1_100_2324<-Calculated_GDH(df_T1_2,"2023/11/16",fecha_fin_100_T1_2324)
+
+GDH_T1_25_2324
+GDH_T1_50_2324
+GDH_T1_75_2324
+GDH_T1_100_2324
+
+```
+
+3. For T2
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-03-11"     
+
+df_T2_2 <- filter_df(hourtemps_2, "T2","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T2_2)
+```
+
+```{r}
+fecha_fin_25_T2_2324<-fechas_T2_2324$fecha_fin_25
+fecha_fin_50_T2_2324<-fechas_T2_2324$fecha_fin_50
+fecha_fin_75_T2_2324<-fechas_T2_2324$fecha_fin_75
+fecha_fin_100_T2_2324<-"2024/03/11"
+CP_25_T2_2324<-fechas_T2_2324$portion_25
+CP_30_T2_2324<-fechas_T2_2324$portion_50
+CP_45_T2_2324<-fechas_T2_2324$portion_75
+CP_100_T2_2324<-fechas_T2_2324$portion_100
+GDH_T2_25_2324<-Calculated_GDH(df_T2_2,fecha_fin_25_T2_2324,fecha_fin_100_T2_2324)
+GDH_T2_50_2324<-Calculated_GDH(df_T2_2,fecha_fin_50_T2_2324,fecha_fin_100_T2_2324)
+GDH_T2_75_2324<-Calculated_GDH(df_T2_2,fecha_fin_75_T2_2324,fecha_fin_100_T2_2324)
+GDH_T2_100_2324<-Calculated_GDH(df_T2_2,"2023/11/16",fecha_fin_100_T2_2324)
+
+GDH_T2_25_2324
+GDH_T2_50_2324
+GDH_T2_75_2324
+GDH_T2_100_2324
+```
+
+4. For T3
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-02-26"     
+
+df_T3_2 <- filter_df(hourtemps_2, "T3","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T3_2)
+```
+
+```{r}
+fecha_fin_25_T3_2324<-fechas_T3_2324$fecha_fin_25
+fecha_fin_50_T3_2324<-fechas_T3_2324$fecha_fin_50
+fecha_fin_75_T3_2324<-fechas_T3_2324$fecha_fin_75
+fecha_fin_100_T3_2324<-"2024/02/26"
+CP_25_T3_2324<-fechas_T3_2324$portion_25
+CP_30_T3_2324<-fechas_T3_2324$portion_50
+CP_45_T3_2324<-fechas_T3_2324$portion_75
+CP_100_T3_2324<-fechas_T3_2324$portion_100
+GDH_T3_25_2324<-Calculated_GDH(df_T3_2,fecha_fin_25_T3_2324,fecha_fin_100_T3_2324)
+GDH_T3_50_2324<-Calculated_GDH(df_T3_2,fecha_fin_50_T3_2324,fecha_fin_100_T3_2324)
+GDH_T3_75_2324<-Calculated_GDH(df_T3_2,fecha_fin_75_T3_2324,fecha_fin_100_T3_2324)
+GDH_T3_100_2324<-Calculated_GDH(df_T3_2,"2023/11/16",fecha_fin_100_T3_2324)
+
+GDH_T3_25_2324
+GDH_T3_50_2324
+GDH_T3_75_2324
+GDH_T3_100_2324
+```
+
+
+5. For T4
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-03-04"     
+
+df_T4_2 <- filter_df(hourtemps_2, "T4","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T4_2)
+```
+
+```{r}
+fecha_fin_25_T4_2324<-fechas_T4_2324$fecha_fin_25
+fecha_fin_50_T4_2324<-fechas_T4_2324$fecha_fin_50
+fecha_fin_75_T4_2324<-fechas_T4_2324$fecha_fin_75
+fecha_fin_100_T4_2324<-"2024/03/04"
+CP_25_T4_2324<-fechas_T4_2324$portion_25
+CP_30_T4_2324<-fechas_T4_2324$portion_50
+CP_45_T4_2324<-fechas_T4_2324$portion_75
+CP_100_T4_2324<-fechas_T4_2324$portion_100
+GDH_T4_25_2324<-Calculated_GDH(df_T4_2,fecha_fin_25_T4_2324,fecha_fin_100_T4_2324)
+GDH_T4_50_2324<-Calculated_GDH(df_T4_2,fecha_fin_50_T4_2324,fecha_fin_100_T4_2324)
+GDH_T4_75_2324<-Calculated_GDH(df_T4_2,fecha_fin_75_T4_2324,fecha_fin_100_T4_2324)
+GDH_T4_100_2324<-Calculated_GDH(df_T4_2,"2023/11/16",fecha_fin_100_T4_2324)
+
+GDH_T4_25_2324
+GDH_T4_50_2324
+GDH_T4_75_2324
+GDH_T4_100_2324
+```
+
+
+6. For T5
+
+```{r}
+fecha_inicio <- "2023-11-16"  
+fecha_fin <- "2024-03-08"     
+
+df_T5_2 <- filter_df(hourtemps_2, "T5","FECHA", fecha_inicio, fecha_fin)
+
+View(df_T5_2)
+```
+
+```{r}
+fecha_fin_25_T5_2324<-fechas_T5_2324$fecha_fin_25
+fecha_fin_50_T5_2324<-fechas_T5_2324$fecha_fin_50
+fecha_fin_75_T5_2324<-fechas_T5_2324$fecha_fin_75
+fecha_fin_100_T5_2324<-"2024/03/08"
+CP_25_T5_2324<-fechas_T5_2324$portion_25
+CP_30_T5_2324<-fechas_T5_2324$portion_50
+CP_45_T5_2324<-fechas_T5_2324$portion_75
+CP_100_T5_2324<-fechas_T5_2324$portion_100
+GDH_T5_25_2324<-Calculated_GDH(df_T5_2,fecha_fin_25_T5_2324,fecha_fin_100_T5_2324)
+GDH_T5_50_2324<-Calculated_GDH(df_T5_2,fecha_fin_50_T5_2324,fecha_fin_100_T5_2324)
+GDH_T5_75_2324<-Calculated_GDH(df_T5_2,fecha_fin_75_T5_2324,fecha_fin_100_T5_2324)
+GDH_T5_100_2324<-Calculated_GDH(df_T5_2,"2023/11/16",fecha_fin_100_T5_2324)
+
+GDH_T5_25_2324
+GDH_T5_50_2324
+GDH_T5_75_2324
+GDH_T5_100_2324
+```
+
+
+## GDH Table
+
+
+```{r}
+table_GDH<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),GDH_25_100=  c(GDH_TA_25,GDH_T1_25,GDH_T2_25,GDH_T3_25,GDH_T4_25,GDH_T5_25,GDH_TA_25_2324,GDH_T1_25_2324,GDH_T2_25_2324,GDH_T3_25_2324,GDH_T4_25_2324,GDH_T5_25_2324),GDH_50_100 = c( GDH_TA_50,GDH_T1_50,GDH_T2_50,GDH_T3_50,GDH_T4_50,GDH_T5_50,GDH_TA_50_2324,GDH_T1_50_2324,GDH_T2_50_2324,GDH_T3_50_2324,GDH_T4_50_2324,GDH_T5_50_2324), GDH_75_100 = c( GDH_TA_75,GDH_T1_75,GDH_T2_75,GDH_T3_75,GDH_T4_75,GDH_T5_75,GDH_TA_75_2324,GDH_T1_75_2324,GDH_T2_75_2324,GDH_T3_75_2324,GDH_T4_75_2324,GDH_T5_75_2324), GDH_100 = c( GDH_TA_100,GDH_T1_100,GDH_T2_100,GDH_T3_100,GDH_T4_100,GDH_T5_100,GDH_TA_100_2324,GDH_T1_100_2324,GDH_T2_100_2324,GDH_T3_100_2324,GDH_T4_100_2324,GDH_T5_100_2324))
+
+```
+
+```{r}
+table_GDH
+```
+
+
+## Date table GDH
+
+```{r}
+table_fecha<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),Fecha_25_100=  c(fecha_fin_25_TA_2223,fecha_fin_25_T1_2223,fecha_fin_25_T2_2223,fecha_fin_25_T3_2223,fecha_fin_25_T4_2223,fecha_fin_25_T5_2223,fecha_fin_25_TA_2324,fecha_fin_25_T1_2324,fecha_fin_25_T2_2324,fecha_fin_25_T3_2324,fecha_fin_25_T4_2324,fecha_fin_25_T5_2324),Fecha_50_100 = c(fecha_fin_50_TA_2223,fecha_fin_50_T1_2223,fecha_fin_50_T2_2223,fecha_fin_50_T3_2223,fecha_fin_50_T4_2223,fecha_fin_50_T5_2223,fecha_fin_50_TA_2324,fecha_fin_50_T1_2324,fecha_fin_50_T2_2324,fecha_fin_50_T3_2324,fecha_fin_50_T4_2324,fecha_fin_50_T5_2324), Fecha_75_100 = c( fecha_fin_75_TA_2223,fecha_fin_75_T1_2223,fecha_fin_75_T2_2223,fecha_fin_75_T3_2223,fecha_fin_75_T4_2223,fecha_fin_75_T5_2223,fecha_fin_75_TA_2324,fecha_fin_75_T1_2324,fecha_fin_75_T2_2324,fecha_fin_75_T3_2324,fecha_fin_75_T4_2324,fecha_fin_75_T5_2324), Fecha_100 = c(fecha_fin_100_TA_2223,fecha_fin_100_T1_2223,fecha_fin_100_T2_2223,fecha_fin_100_T3_2223,fecha_fin_100_T4_2223,fecha_fin_100_T5_2223,fecha_fin_100_TA_2324,fecha_fin_100_T1_2324,fecha_fin_100_T2_2324,fecha_fin_100_T3_2324,fecha_fin_100_T4_2324,fecha_fin_100_T5_2324))
+table_fecha
+```
+
+
+## Table CP
+
+```{r}
+table_porciones<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),CP_25=c(CP_25_TA_2223,CP_25_T1_2223,CP_25_T2_2223,CP_25_T3_2223,CP_25_T4_2223,CP_25_T5_2223,CP_25_TA_2324,CP_25_T1_2324,CP_25_T2_2324,CP_25_T3_2324,CP_25_T4_2324,CP_25_T5_2324),CP_30=c(CP_30_TA_2223,CP_30_T1_2223,CP_30_T2_2223,CP_30_T3_2223,CP_30_T4_2223,CP_30_T5_2223,CP_30_TA_2324,CP_30_T1_2324,CP_30_T2_2324,CP_30_T3_2324,CP_30_T4_2324,CP_30_T5_2324),CP_45=c(CP_45_TA_2223,CP_45_T1_2223,CP_45_T2_2223,CP_45_T3_2223,CP_45_T4_2223,CP_45_T5_2223,CP_45_TA_2324,CP_45_T1_2324,CP_45_T2_2324,CP_45_T3_2324,CP_45_T4_2324,CP_45_T5_2324),CP_100=c(CP_100_TA_2223,CP_100_T1_2223,CP_100_T2_2223,CP_100_T3_2223,CP_100_T4_2223,CP_100_T5_2223,CP_100_TA_2324,CP_100_T1_2324,CP_100_T2_2324,CP_100_T3_2324,CP_100_T4_2324,CP_100_T5_2324))
+table_porciones
+```
+
+
+
+## Plots GDH (from cold accumulation (y-axis)) vs GDH (in greenhouse (x-axis))
+
+### 100
+
+1. A function is created to obtain the metric, R^2, of the linear models.
+
+```{r}
+get_R2 <- function(modelo) {
+  summary(modelo)$r.squared
+}
+
+modelo_GDH_100 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_100)
+R2_GDH_100 <- get_R2(modelo_GDH_100)
+saveRDS(modelo_GDH_100,"modelo_GDH_100")
+summary(modelo_GDH_100)
+```
+
+
+
+```{r}
+graph3_5_100<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),GDH_while_accumulating_chill= c(GDH_TA_100,GDH_T1_100,GDH_T2_100,GDH_T3_100,GDH_T4_100,GDH_T5_100,GDH_TA_100_2324,GDH_T1_100_2324,GDH_T2_100_2324,GDH_T3_100_2324,GDH_T4_100_2324,GDH_T5_100_2324))
+View(graph3_5_100)
+```
+
+
+
+```{r}
+ggplot(graph3_5_100, aes(x = GDH_while_accumulating_chill, y = GDH_In_the_glasshouse,color = factor(Temporada))) +
+  geom_point() +
+  geom_text(aes(label = Treatment), vjust = -1) +
+  geom_smooth(method = "lm",color = "darkred",size=1) +
+  scale_color_manual(values = c("#DA70D6", "palegreen4"), 
+                     breaks = c(1, 2), 
+                     labels = c("Season 1", "Season 2")) +
+  labs(color = "Season") +
+  scale_x_continuous(breaks = seq(5000, 20000,5000),limits = c(5000, 20000)) +
+  scale_y_continuous(breaks = seq(1000, 7000,1000),limits = c(1000, 7000)) +
+  labs(x = "GDH (while accumulating chill)", y = "GDH (in the glasshouse)",title = paste0("R2: ",round(R2_GDH_100,3)))+ theme_minimal()
+```
+
+
+
+
+### 25
+
+
+```{r}
+graph3_5_25<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),GDH_while_accumulating_chill= c(GDH_TA_25,GDH_T1_25,GDH_T2_25,GDH_T3_25,GDH_T4_25,GDH_T5_25,GDH_TA_25_2324,GDH_T1_25_2324,GDH_T2_25_2324,GDH_T3_25_2324,GDH_T4_25_2324,GDH_T5_25_2324))
+#View(graph3_5_25)
+```
+
+
+
+```{r}
+modelo_GDH_25 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_25)
+R2_GDH_25 <- get_R2(modelo_GDH_25)
+summary(modelo_GDH_25)
+
+saveRDS(modelo_GDH_25,"modelo_GDH_25")
+```
+
+
+```{r}
+ggplot(graph3_5_25, aes(x = GDH_while_accumulating_chill, y = GDH_In_the_glasshouse,color = factor(Temporada))) +
+  geom_point() +
+  geom_text(aes(label = Treatment), vjust = -1) +
+  geom_smooth(method = "lm",color = "darkred",size=1,level= 0.99) +
+  scale_color_manual(values = c("#DA70D6", "palegreen4"), 
+                     breaks = c(1, 2), 
+                     labels = c("Season 1", "Season 2")) +
+  labs(color = "Season") +
+  scale_x_continuous(breaks = seq(1000, 15000,5000),limits = c(1000, 15000)) +
+  scale_y_continuous(breaks = seq(-1000, 8000,1000),limits = c(-1000, 8000)) +
+  labs(x = "GDH (while accumulating chill)", y = "GDH (in the glasshouse)",title = paste0("R2 (25% CP): ",round(R2_GDH_25,3)))+ theme_minimal()
+```
+
+
+### 50
+
+
+```{r}
+graph3_5_50<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),GDH_while_accumulating_chill= c(GDH_TA_50,GDH_T1_50,GDH_T2_50,GDH_T3_50,GDH_T4_50,GDH_T5_50,GDH_TA_50_2324,GDH_T1_50_2324,GDH_T2_50_2324,GDH_T3_50_2324,GDH_T4_50_2324,GDH_T5_50_2324))
+View(graph3_5_50)
+```
+
+
+
+
+```{r}
+modelo_GDH_50 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_50)
+R2_GDH_50 <- get_R2(modelo_GDH_50)
+saveRDS(modelo_GDH_50,"modelo_GDH_50")
+summary(modelo_GDH_50)
+```
+
+
+```{r}
+ggplot(graph3_5_50, aes(x = GDH_while_accumulating_chill, y = GDH_In_the_glasshouse,color = factor(Temporada))) +
+  geom_point() +
+  geom_text(aes(label = Treatment), vjust = -1) +  
+  geom_smooth(method = "lm",color = "darkred",size=1) +
+  scale_color_manual(values = c("#DA70D6", "palegreen4"), 
+                     breaks = c(1, 2), 
+                     labels = c("Season 1", "Season 2")) +
+  labs(color = "Season") +
+  scale_x_continuous(breaks = seq(500, 15000,5000),limits = c(500, 15000)) +
+  scale_y_continuous(breaks = seq(-1000, 7000,1000),limits = c(-1000, 7000)) +
+  labs(x = "GDH (while accumulating chill)", y = "GDH (in the glasshouse)",title = paste0("R2 (50% CP): ",round(R2_GDH_50,3)))+ theme_minimal()
+```
+
+
+### 75
+
+
+```{r}
+graph3_5_75<-data.frame(Treatment = c("TColdstore","T1","T2","T3","T4","T5","TColdstore","T1","T2","T3","T4","T5"),Temporada = c ("1","1","1","1","1","1","2","2","2","2","2","2"),GDH_In_the_glasshouse = c(5488,3612,3269,3447,1912,5812,5567,3583,3149,5777,1081,2517),GDH_while_accumulating_chill= c(GDH_TA_75,GDH_T1_75,GDH_T2_75,GDH_T3_75,GDH_T4_75,GDH_T5_75,GDH_TA_75_2324,GDH_T1_75_2324,GDH_T2_75_2324,GDH_T3_75_2324,GDH_T4_75_2324,GDH_T5_75_2324))
+View(graph3_5_75)
+```
+
+
+
+
+```{r}
+modelo_GDH_75 <- lm(GDH_In_the_glasshouse ~ GDH_while_accumulating_chill, data = graph3_5_75)
+R2_GDH_75 <- get_R2(modelo_GDH_75)
+saveRDS(modelo_GDH_75,"modelo_GDH_75")
+summary(modelo_GDH_75)
+```
+
+
+```{r}
+ggplot(graph3_5_75, aes(x = GDH_while_accumulating_chill, y = GDH_In_the_glasshouse,color = factor(Temporada))) +
+  geom_point() +
+  geom_text(aes(label = Treatment), vjust = -1) +
+  geom_smooth(method = "lm",color = "darkred",size=1) +
+  scale_color_manual(values = c("#DA70D6", "palegreen4"), 
+                     breaks = c(1, 2), 
+                     labels = c("Season 1", "Season 2")) +
+  labs(color = "Season") +
+  scale_x_continuous(breaks = seq(100, 10000,1000),limits = c(100, 10000)) +
+  scale_y_continuous(breaks = seq(-1000, 6000,1000),limits = c(-1000, 6000)) +
+  labs(x = "GDH (while accumulating chill)", y = "GDH (in the glasshouse)",title = paste0("R2 (75% CP): ",round(R2_GDH_75,3)))+ theme_minimal()
+```
