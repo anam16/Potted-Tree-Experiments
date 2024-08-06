@@ -460,9 +460,39 @@ predicciones_1 <- predict(modelo_Section1_month_temp_radi_hours, Data1_month)
 Data1_month$Invernadero <- predicciones_1
 ```
 
+Graph observed vs predicted values for month of December
+
+```{r}
+figure_december<-ggplot(Data1_month, aes(x = predicciones_1, y = Invernadero)) +
+  geom_point(color = "blue", size = 2) +
+  geom_abline(intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Predicted Values",
+    y = "Observed Values"
+  ) +
+  theme_minimal()
+
+figure_december
+```
+
+
 ```{r}
 predicciones_2 <- predict(modelo_Section2_month_temp_radi_hours, Data2_month)
 Data2_month$Invernadero <- predicciones_2
+```
+
+Graph observed vs predicted values for month of January
+
+```{r}
+figure_january<-ggplot(Data2_month, aes(x = predicciones_2, y = Invernadero)) +
+  geom_point(color = "blue", size = 2) +
+  geom_abline(intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Predicted Values",
+    y = "Observed Values"
+  ) +
+  theme_minimal()
+
 ```
 
 ```{r}
@@ -470,11 +500,56 @@ predicciones_3 <- predict(modelo_Section3_month_temp_radi_hours, Data3_month)
 Data3_month$Invernadero <- predicciones_3
 ```
 
+Graph observed vs predicted values for month of february
+
+```{r}
+figure_february<-ggplot(Data3_month, aes(x = predicciones_3, y = Invernadero)) +
+  geom_point(color = "blue", size = 2) +
+  geom_abline(intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Predicted Values",
+    y = "Observed Values"
+  ) +
+  theme_minimal()
+
+```
 
 ```{r}
 predicciones_4 <- predict(modelo_Section4_month_temp_radi_hours, Data4_month)
 Data4_month$Invernadero <- predicciones_4
 ```
+
+Graph observed vs predicted values for month of march
+
+```{r}
+figure_march<-ggplot(Data4_month, aes(x = predicciones_4, y = Invernadero)) +
+  geom_point(color = "blue", size = 2) +
+  geom_abline(intercept = 0, color = "red", linetype = "dashed") +
+  labs(
+    x = "Predicted Values",
+    y = "Observed Values"
+  ) +
+  theme_minimal()
+figure_march
+```
+
+The 4 graphics are merged into one. This figure corresponds to figure S2 of the supplementary materials.
+
+```{r}
+Figure_models <- ggarrange(
+  figure_december, 
+  figure_january,
+  figure_february,
+  figure_march,
+  labels = c("A", "B", "C", "D"), 
+  ncol = 2, 
+  nrow = 2
+)
+
+Figure_models
+ggsave("Figure_models.png", Figure_models, width = 35, height = 19, units = "cm", dpi = 300)
+```
+
 
 6. The final corrected dataset is created.
 
